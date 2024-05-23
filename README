@@ -1,0 +1,6 @@
+```
+docker build -t comprador .
+docker exec -it comprador /bin/bash
+python3 assistant.py
+# copy the ID to config.py in GPT_ID
+```

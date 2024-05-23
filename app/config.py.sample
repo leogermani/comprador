@@ -1,0 +1,28 @@
+import os
+
+class Config:
+    # Database config
+    DB_HOST = os.environ.get('MYSQL_HOST')
+    DB_USER = os.environ.get('MYSQL_USER')
+    DB_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    DB_DATABASE = os.environ.get('MYSQL_DATABASE')
+
+    # Use the environment variables in your application
+    # For example, configure SQLAlchemy database URI
+    SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_DATABASE}"
+
+    # Google Sheets config
+    SHEETS_SPREADSHEET_ID = 'xxxx'
+    PRODUCTS_SHEET_NAME = 'xxx'
+
+    OPENAI_API_KEY = 'xxx'
+    GPT_ID = 'xxx'
+
+    ZAPI_TOKEN = 'xxx'
+    ZAPI_CLIENT_TOKEN = 'xxx'
+    ZAPI_INSTANCE = 'xxx'
+
+    ZAPI_TOKEN_QUOTER = 'xxx'
+    ZAPI_CLIENT_TOKEN_QUOTER = 'xxx'
+    ZAPI_INSTANCE_QUOTER = 'xxx'
+

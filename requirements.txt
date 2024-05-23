@@ -1,0 +1,7 @@
+flask
+flask-sqlalchemy
+mysql-connector-python
+google-api-python-client
+openai
+gspread
+oauth2client
