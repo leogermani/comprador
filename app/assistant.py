@@ -27,8 +27,8 @@ class Assistant:
 
         instructions_text = instructions_base + '\n'.join(known_products)
 
-        print('instructions: ')
-        print( instructions_text )
+        # print('instructions: ')
+        # print( instructions_text )
 
 
         assistant_run = openai.beta.threads.runs.create(
@@ -62,6 +62,8 @@ class Assistant:
                 break
             elif keep_retrieving_run.status == 'requires_action':
                 for call in keep_retrieving_run.required_action.submit_tool_outputs.tool_calls:
+                    print(f"Call: {call.id}")
+                    print(f"Action: {call.function.name}")
                     if call.function.name == 'create_quote':
                         parsed_arguments = json.loads(call.function.arguments)
                         order_id = self.create_quote( parsed_arguments['items'] )
@@ -72,6 +74,82 @@ class Assistant:
                                 {
                                     "tool_call_id": call.id,
                                     "output": "Pedido confirmado com o número " + str(order_id) + ". Informe esse número ao cliente para acompanhamento do pedido.",
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'create_blank_quote':
+                        output = self.create_blank_quote()
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'add_items_to_existing_quote':
+                        parsed_arguments = json.loads(call.function.arguments)
+                        output = self.add_items_to_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'update_items_in_existing_quote':
+                        parsed_arguments = json.loads(call.function.arguments)
+                        output = self.update_items_in_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'remove_items_from_existing_quote':
+                        parsed_arguments = json.loads(call.function.arguments)
+                        output = self.remove_items_from_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'list_all_quotes':
+                        output = self.list_all_quotes()
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
+                                },
+                                ]
+                            )
+                    elif call.function.name == 'send_quote_request':
+                        parsed_arguments = json.loads(call.function.arguments)
+                        output = self.send_quote_request(parsed_arguments['quote_id'])
+                        openai.beta.threads.runs.submit_tool_outputs(
+                            thread_id=thread_id,
+                            run_id=keep_retrieving_run.id,
+                            tool_outputs=[
+                                {
+                                    "tool_call_id": call.id,
+                                    "output": output,
                                 },
                                 ]
                             )
@@ -102,10 +180,48 @@ class Assistant:
             items_string = items_string + str(item['item_quantity']) + ' - ' + item['item_name'] + '; '
 
         quote_id = Quote.create_new_quote()
-        for item in items:
-            QuoteItem.add_item_to_quote(quote_id, item['item_quantity'], item['item_name'])
+
+        QuoteItem.add_items_to_quote(quote_id, items)
 
         return "pedido criado com ID " + str(quote_id) + ". Itens: " + items_string + "."
+
+    def create_blank_quote(self):
+
+        quote_id = Quote.create_new_quote()
+        return "pedido criado com ID " + str(quote_id)
+
+    def add_items_to_existing_quote(self, quote_id, items):
+        items_string = ''
+        for item in items:
+            items_string = items_string + str(item['item_quantity']) + ' - ' + item['item_name'] + '; '
+        QuoteItem.add_items_to_quote(quote_id, items)
+        return "Itens adicionado ao pedido " + str(quote_id) + ": " + items_string
+
+    def update_items_in_existing_quote(self, quote_id, items):
+        for item in items:
+            items_string = items_string + str(item['item_quantity']) + ' - ' + item['item_name'] + '; '
+        QuoteItem.update_item_in_quote(quote_id, items)
+        return "Itens modificado no pedido " + str(quote_id) + ": " + items_string
+
+    def remove_items_from_existing_quote(self, quote_id, item_name):
+        for item in items:
+            items_string = items_string + item['item_name'] + '; '
+        QuoteItem.remove_items_from_quote(quote_id, item_name)
+        return "Itens removido do pedido " + items_string
+
+    def list_all_quotes(self):
+        quotes = Quote.list_all_quotes()
+        quotes_string = ''
+        for quote in quotes:
+            quotes_string = quotes_string + "Pedido " + str(quote.id) + ":\n"
+            for item in quote.get_quote_items():
+                quotes_string = quotes_string + str(item.quantity) + " - " + item.item_name + "\n"
+            quotes_string = quotes_string + "\n"
+        return quotes_string
+
+    def send_quote_request(self, quote_id):
+        print("Sending quote request for quote " + str(quote_id))
+        return "Pedido de orçamento enviado para os fornecedores"
 
 if __name__ == "__main__":
 
@@ -116,26 +232,118 @@ if __name__ == "__main__":
         name="Assistente de Cotação - Montar pedido",
         description="Você é um assistente que vai ajudar a montar uma lista de compras para que outro assistente faça uma cotação.",
         model="gpt-4-turbo-preview",
-        tools=[{
-            "type": "function",
-            "function": {
-                "name": "create_quote",
-                "description": "Creates a new quote",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "items": {"type": "array", "description": "The items to be added to the quote", "items": {
-                            "type": "object",
-                            "properties": {
-                                "item_name": { "type": "string"},
-                                "item_quantity": { "type": "integer"},
-                            }
-                        }},
-                    },
-                    "required": ["items"]
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_quote",
+                    "description": "Creates a new quote with items",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "items": {"type": "array", "description": "The items to be added to the quote", "items": {
+                                "type": "object",
+                                "properties": {
+                                    "item_name": { "type": "string"},
+                                    "item_quantity": { "type": "integer"},
+                                }
+                            }},
+                        },
+                        "required": ["items"]
+                    }
                 }
-            }
-        }]
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_blank_quote",
+                    "description": "Creates a new quote without any items",
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "add_items_to_existing_quote",
+                    "description": "Adds a new item to an existing quote",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "quote_id": { "type": "integer"},
+                            "items": {"type": "array", "description": "The items to be added to the quote", "items": {
+                                "type": "object",
+                                "properties": {
+                                    "item_name": { "type": "string"},
+                                    "item_quantity": { "type": "integer"},
+                                }
+                            }},
+                        },
+                        "required": ["quote_id", "items"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_items_in_existing_quote",
+                    "description": "Updates an item quantity in an existing quote",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "quote_id": { "type": "integer"},
+                            "items": {"type": "array", "description": "The items to be added to the quote", "items": {
+                                "type": "object",
+                                "properties": {
+                                    "item_name": { "type": "string"},
+                                    "item_quantity": { "type": "integer"},
+                                }
+                            }},
+                        },
+                        "required": ["quote_id", "items"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "remove_items_from_existing_quote",
+                    "description": "Removes an item from an existing quote",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "quote_id": { "type": "integer"},
+                            "items": {"type": "array", "description": "The items to be added to the quote", "items": {
+                                "type": "object",
+                                "properties": {
+                                    "item_name": { "type": "string"},
+                                }
+                            }},
+                        },
+                        "required": ["quote_id", "items"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_all_quotes",
+                    "description": "Lists all quotes created in the system",
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "send_quote_request",
+                    "description": "Sends a given quote to the suppliers for a quote request",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "quote_id": { "type": "integer"},
+                        },
+                        "required": ["quote_id"]
+                    }
+                }
+            },
+        ]
     )
     print( "Created")
     print(assistant.id)

@@ -52,12 +52,37 @@ class QuoteItem(db.Model):
     item_name = db.Column(db.String(200), nullable=False)
 
     @staticmethod
-    def add_item_to_quote(quote_id, quantity, item_name):
-        new_item = QuoteItem(quote_id=quote_id, quantity=quantity, item_name=item_name)
-        db.session.add(new_item)
+    def add_items_to_quote(quote_id, items):
+        for item in items:
+            # check if an item with the same item name already exists, if so, update the quantity, otherwise create a new item
+            existing_item = QuoteItem.query.filter_by(quote_id=quote_id, item_name=item['item_name']).first()
+            if existing_item:
+                existing_item.quantity += item['item_quantity']
+                db.session.commit()
+            else:
+                new_item = QuoteItem(quote_id=quote_id, quantity=item['item_quantity'], item_name=item['item_name'])
+                db.session.add(new_item)
         db.session.commit()
-        return new_item.id
 
+
+    @staticmethod
+    def update_items_in_quote(quote_id, items):
+        QuoteItem.remove_all_items_from_quote(quote_id)
+        QuoteItem.add_items_to_quote(quote_id, items)
+
+    @staticmethod
+    def remove_all_items_from_quote(quote_id):
+        items = QuoteItem.query.filter_by(quote_id=quote_id).all()
+        for item in items:
+            db.session.delete(item)
+        db.session.commit()
+
+    @staticmethod
+    def remove_items_from_quote(quote_id, items):
+        for item in items:
+            item_to_remove = QuoteItem.query.filter_by(quote_id=quote_id, item_name=item['item_name']).first()
+            db.session.delete(item_to_remove)
+        db.session.commit()
 
 if __name__ == "__main__":
 

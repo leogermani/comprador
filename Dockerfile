@@ -21,4 +21,4 @@ EXPOSE 8000
 # Mount the app directory as a volume
 VOLUME /app
 
-CMD ["gunicorn", "wa_webhook:app", "-b", "0.0.0.0:8000"]
+CMD ["gunicorn", "wa_webhook:app", " --timeout", "120", "-b", "0.0.0.0:8000"]
