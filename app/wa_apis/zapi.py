@@ -10,8 +10,8 @@ class Zapi:
 
     def get_user_and_message(self):
         payload = request.json
-        if 'fromMe' in payload and payload.fromMe:
-            return None
+        # if 'fromMe' in payload and payload.fromMe:
+        #     return None
 
         # Process the payload here
         print("Received payload:", payload)
