@@ -1,5 +1,5 @@
 
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 RUN apt-get update -y
 RUN apt-get install -y python3-dev  build-essential python3-pip gunicorn

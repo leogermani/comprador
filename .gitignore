@@ -1,1 +1,4 @@
 __pycache__
+.env
+app/config.py
+app/service-account.json
