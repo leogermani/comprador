@@ -4,7 +4,7 @@ from config import Config
 
 class Zapi:
     def __init__(self):
-        if 'Z-Api-Token' not in request.headers or request.headers['Z-Api-Token'] != Config.ZAPI_CLIENT_TOKEN:
+        if 'Z-Api-Token' not in request.headers or request.headers['Z-Api-Token'] != Config.ZAPI_TOKEN:
             raise PermissionError('Unauthorized request')
 
 

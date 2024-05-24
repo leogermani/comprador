@@ -15,7 +15,7 @@ def handle_webhook():
     assistant = Assistant( phone=user_and_message['phone'], message=user_and_message['message'] )
     return assistant.process()
 
-@app.route('/zapi-message-received', methods=['PUT'])
+@app.route('/zapi-message-received', methods=['PUT','POST'])
 def handle_zapi_webhook():
     try:
         zapi_instance = Zapi()
