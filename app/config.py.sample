@@ -14,6 +14,7 @@ class Config:
     # Google Sheets config
     SHEETS_SPREADSHEET_ID = 'xxxx'
     PRODUCTS_SHEET_NAME = 'xxx'
+    SUPPLIERS_SHEET_NAME = 'xxx'
 
     OPENAI_API_KEY = 'xxx'
     GPT_ID = 'xxx'

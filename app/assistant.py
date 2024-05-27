@@ -175,6 +175,31 @@ class Assistant:
 
     def send_quote_request(self, quote_id):
         print("Sending quote request for quote " + str(quote_id))
+        quote = Quote.query.get(quote_id)
+        items = quote.get_quote_items()
+        all_suppliers = Spreadsheet().get_suppliers()
+        for item in items:
+            suppliers = Spreadsheet().get_suppliers_for_item(item.item_name)
+            for supplier in suppliers:
+                all_suppliers[supplier['CNPJ']]['items'].append(item)
+
+        # print(all_suppliers)
+
+        for supplier in all_suppliers:
+            # skip suppliers that don't have any items
+            if len(all_suppliers[supplier]['items']) == 0:
+                continue
+
+
+            print("Enviando pedido para " + all_suppliers[supplier]['name'])
+            print("Itens: ")
+            items_string = ''
+            for item in all_suppliers[supplier]['items']:
+                items_string = items_string + str(item.quantity) + ' - ' + item.item_name + "\n"
+
+            message = "Oi " + all_suppliers[supplier]['contato'] +",\n gostaria de solicitar um orçamento para os seguintes itens:\n" + items_string
+            print(message)
+
         return "Pedido de orçamento enviado para os fornecedores"
 
 if __name__ == "__main__":

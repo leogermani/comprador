@@ -37,3 +37,19 @@ class Zapi:
 
         response = requests.post( url, json=payload, headers=headers)
         return response.status_code
+
+    def send_quote(self, phone, message):
+        token = Config.ZAPI_TOKEN_QUOTER
+        zapi_instance_id = Config.ZAPI_INSTANCE_QUOTER
+
+        url=f'https://api.z-api.io/instances/{zapi_instance_id}/token/{token}/send-text'
+
+        payload = {
+            'phone': phone,
+            'message': message
+        }
+
+        headers = { 'Client-Token': Config.ZAPI_CLIENT_TOKEN_QUOTER }
+
+        response = requests.post( url, json=payload, headers=headers)
+        return response.status_code

@@ -10,3 +10,9 @@ class Testing:
         # Process the payload here
         print("Received payload:", payload)
         return payload
+
+    def send_quote(self, phone, message):
+        print("Sending quote")
+        print("Phone:", phone)
+        print("Message:", message)
+        return 200
