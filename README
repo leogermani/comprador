@@ -1,6 +1,14 @@
 ```
+#copy env-sample to .env and fill in the info
+
 docker build -t comprador .
+
+docker-compose up
 docker exec -it comprador /bin/bash
+
+#copy config-sample to config.py and fill in the info
+
 python3 assistant.py
 # copy the ID to config.py in GPT_ID
+python3 models.py
 ```
