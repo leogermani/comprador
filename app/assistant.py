@@ -7,11 +7,12 @@ from spreadsheet import Spreadsheet
 from pathlib import Path
 
 class Assistant:
-    def __init__(self, phone, message):
+    def __init__(self, phone, message, api_instance=None):
         openai.api_key = Config.OPENAI_API_KEY
         self.gpt_id = Config.GPT_ID
         self.phone = phone
         self.message = message
+        self.api_instance = api_instance
 
     def process(self):
         thread_id = self.get_thread_id()
@@ -192,13 +193,15 @@ class Assistant:
 
 
             print("Enviando pedido para " + all_suppliers[supplier]['name'])
-            print("Itens: ")
+            #print("Itens: ")
             items_string = ''
             for item in all_suppliers[supplier]['items']:
                 items_string = items_string + str(item.quantity) + ' - ' + item.item_name + "\n"
 
             message = "Oi " + all_suppliers[supplier]['contato'] +",\n gostaria de solicitar um orçamento para os seguintes itens:\n" + items_string
-            print(message)
+            #print(message)
+
+            self.api_instance.send_quote(all_suppliers[supplier]['phone'], message)
 
         return "Pedido de orçamento enviado para os fornecedores"
 

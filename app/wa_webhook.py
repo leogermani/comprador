@@ -12,7 +12,7 @@ def handle_webhook():
     except:
         abort(403)
     user_and_message = testing_instance.get_user_and_message()
-    assistant = Assistant( phone=user_and_message['phone'], message=user_and_message['message'] )
+    assistant = Assistant( phone=user_and_message['phone'], message=user_and_message['message'], api_instance=testing_instance )
     return assistant.process()
 
 @app.route('/zapi-message-received', methods=['PUT','POST'])
@@ -24,7 +24,7 @@ def handle_zapi_webhook():
     user_and_message = zapi_instance.get_user_and_message()
     if user_and_message is None:
         abort(418)
-    assistant = Assistant( phone=user_and_message['phone'], message=user_and_message['message'] )
+    assistant = Assistant( phone=user_and_message['phone'], message=user_and_message['message'], api_instance=zapi_instance )
     response = assistant.process()
     response_code = zapi_instance.reply(response)
     return '', response_code
