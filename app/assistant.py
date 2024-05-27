@@ -43,6 +43,7 @@ class Assistant:
                 thread_id=thread_id,
                 run_id=assistant_run.id
             )
+            print(f"Run: {keep_retrieving_run.id}")
             print(f"Run status: {keep_retrieving_run.status}")
 
             if keep_retrieving_run.status == "completed":
@@ -61,98 +62,49 @@ class Assistant:
 
                 break
             elif keep_retrieving_run.status == 'requires_action':
+                tool_outputs = []
                 for call in keep_retrieving_run.required_action.submit_tool_outputs.tool_calls:
                     print(f"Call: {call.id}")
                     print(f"Action: {call.function.name}")
+
                     if call.function.name == 'create_quote':
                         parsed_arguments = json.loads(call.function.arguments)
                         order_id = self.create_quote( parsed_arguments['items'] )
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": "Pedido confirmado com o número " + str(order_id) + ". Informe esse número ao cliente para acompanhamento do pedido.",
-                                },
-                                ]
-                            )
+                        output = "Pedido confirmado com o número " + str(order_id) + ". Informe esse número ao cliente para acompanhamento do pedido."
+
                     elif call.function.name == 'create_blank_quote':
                         output = self.create_blank_quote()
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": output,
-                                },
-                                ]
-                            )
+
                     elif call.function.name == 'add_items_to_existing_quote':
                         parsed_arguments = json.loads(call.function.arguments)
                         output = self.add_items_to_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": output,
-                                },
-                                ]
-                            )
+
                     elif call.function.name == 'update_items_in_existing_quote':
                         parsed_arguments = json.loads(call.function.arguments)
                         output = self.update_items_in_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": output,
-                                },
-                                ]
-                            )
+
                     elif call.function.name == 'remove_items_from_existing_quote':
                         parsed_arguments = json.loads(call.function.arguments)
                         output = self.remove_items_from_existing_quote(parsed_arguments['quote_id'], parsed_arguments['items'])
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": output,
-                                },
-                                ]
-                            )
+
                     elif call.function.name == 'list_all_quotes':
                         output = self.list_all_quotes()
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
-                                    "tool_call_id": call.id,
-                                    "output": output,
-                                },
-                                ]
-                            )
+
                     elif call.function.name == 'send_quote_request':
                         parsed_arguments = json.loads(call.function.arguments)
                         output = self.send_quote_request(parsed_arguments['quote_id'])
-                        openai.beta.threads.runs.submit_tool_outputs(
-                            thread_id=thread_id,
-                            run_id=keep_retrieving_run.id,
-                            tool_outputs=[
-                                {
+
+                    tool_outputs.append({
                                     "tool_call_id": call.id,
                                     "output": output,
-                                },
-                                ]
-                            )
+                                })
+
+                openai.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread_id,
+                    run_id=keep_retrieving_run.id,
+                    tool_outputs=tool_outputs
+                    )
+
             elif keep_retrieving_run.status == "queued" or keep_retrieving_run.status == "in_progress":
                 pass
             else:
@@ -198,15 +150,17 @@ class Assistant:
         return "Itens adicionado ao pedido " + str(quote_id) + ": " + items_string
 
     def update_items_in_existing_quote(self, quote_id, items):
+        items_string = ''
         for item in items:
             items_string = items_string + str(item['item_quantity']) + ' - ' + item['item_name'] + '; '
         QuoteItem.update_item_in_quote(quote_id, items)
         return "Itens modificado no pedido " + str(quote_id) + ": " + items_string
 
-    def remove_items_from_existing_quote(self, quote_id, item_name):
+    def remove_items_from_existing_quote(self, quote_id, items):
+        items_string = ''
         for item in items:
             items_string = items_string + item['item_name'] + '; '
-        QuoteItem.remove_items_from_quote(quote_id, item_name)
+        QuoteItem.remove_items_from_quote(quote_id, items)
         return "Itens removido do pedido " + items_string
 
     def list_all_quotes(self):
